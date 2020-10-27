@@ -697,6 +697,10 @@ void admin(int sockfd)
                         break;
                    }
             case '4':{////////////////Delete Account
+              bzero(type,MAX);
+              read(sockfd,type,sizeof(type));
+              if (type[0]=='Y')
+              {
                       bzero(type, MAX);
                       bzero(id, MAX);
                       bzero(pass, MAX);
@@ -716,12 +720,12 @@ void admin(int sockfd)
                         bzero(cust_id1,MAX);
                         strcpy(cust_id1,id);
                         strcat(cust_id1,".txt");
-
+                        printf("%s %s\n",cust_id1,id );
                         double bal = available_balance(cust_id1);
-                        strcat(cust_id1,".txt");
+
                         if(bal<0)
                         x=0;
-                        else
+                       else
                         {
                           x=deleteAccount(id,pass,type[0]);
                         }
@@ -762,6 +766,7 @@ void admin(int sockfd)
                       n = write(sockfd,buffer,strlen(buffer));
                       if (n < 0)
                       perror("ERROR writing to socket");
+                    }
 
                       break;
                    }
