@@ -216,6 +216,12 @@ double available_balance(char *cust_id)
 {
   char filename[100];
 ////  strcat(cust_id,".txt");
+struct flock fl;
+fl.l_type   = F_RDLCK;
+fl.l_whence = SEEK_SET;
+fl.l_start  = 0;
+fl.l_len    = 0;
+fl.l_pid    = getpid();
   int fp =open(cust_id,O_RDONLY);
   if(fp <0)
       {
@@ -243,8 +249,12 @@ double available_balance(char *cust_id)
   }
   double amount=atoi(token);
 
+  fl.l_type   = F_UNLCK;
+  fcntl(fp, F_SETLK, &fl);
   close(fp);
+
   return amount;
+
 }
 
 void mini_statement(int sock,char *cust_id)
@@ -323,11 +333,19 @@ return check;
 
 int credit_amount(char *id, char *amount,char *trans)
 {
+
   double curr_amount=available_balance(id);
   char filename[50];
    strcpy(filename,id);
   // strcat(filename,".txt");
    printf("%s\n",filename );
+
+   struct flock fl;
+   fl.l_type   = F_WRLCK;
+   fl.l_whence = SEEK_SET;
+   fl.l_start  = 0;
+   fl.l_len    = 0;
+   fl.l_pid    = getpid();
  int fp = open(filename,O_RDWR|O_APPEND);
  if(fp <0)
      {
@@ -354,7 +372,11 @@ int credit_amount(char *id, char *amount,char *trans)
    printf("tran %s\n",transaction);
 
 write(fp,transaction,strlen(transaction));
+
+fl.l_type   = F_UNLCK;
+fcntl(fp, F_SETLK, &fl);
 close(fp);
+
 return 1;
 }
 
@@ -364,6 +386,13 @@ int debit_amount(char *id, char *amount, char *trans)
   char filename[50];
    strcpy(filename,id);
   // strcat(filename,".txt");
+
+struct flock fl;
+fl.l_type   = F_WRLCK;
+fl.l_whence = SEEK_SET;
+fl.l_start  = 0;
+fl.l_len    = 0;
+fl.l_pid    = getpid();
 
  int fp = open(filename,O_RDWR|O_APPEND);
  if(fp <0)
@@ -393,6 +422,10 @@ int debit_amount(char *id, char *amount, char *trans)
    printf("tran %s\n",transaction);
 
 write(fp,transaction,strlen(transaction));
+
+fl.l_type   = F_UNLCK;
+fcntl(fp, F_SETLK, &fl);
+
 close(fp);
 return 1;
 }
