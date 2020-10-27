@@ -204,11 +204,14 @@ void admin(int sockfd)
           case '4':{////////////////Delete Account
 
 								   printf("Enter Y to confirm delete\n");
-                   char confirm;
-                   scanf("%c",&confirm);
+                   char confirm[MAX];
 
-                   if(confirm=='Y')
+                   scanf("%[^\n]%*c",confirm);
+									 write(sockfd,confirm,sizeof(confirm));
+
+                   if(confirm[0]=='Y')
                    {
+										 bzero(type,MAX);
 										 printf("Enter type - C for normal customer, J for joint customer\n");
  										scanf("%[^\n]%*c",type);
  										write(sockfd,type,sizeof(type));// send type
