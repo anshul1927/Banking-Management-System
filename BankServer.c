@@ -9,46 +9,123 @@
 #include <arpa/inet.h>
 #include<string.h>
 #include<time.h>
-#define MAX 1000
+#define MAX 1024
 
-struct admin
+int deleteAccount(char *cust_id,char *pass,char t)
 {
-  char username[MAX];
-  char password [MAX];
-//  char type='A';
-};
-struct customer
+  int i=0;
+  int l = 1;
+  int count=0;
+  int flag=0;
+  char *token;
+  char line[1024];
+
+   int fp = open("login_file.txt",O_RDWR);
+    if(fp <0)
+        perror("Error");
+    while (read(fp,&line[i],1)==1){
+            count++;
+            if(line[i]=='\n' || line[i]==0x0 ){
+                line[i] = 0;
+                token = strtok(line," ");
+                if(strcmp(token,cust_id)==0)
+                  {
+                      count= count-(strlen(pass)+strlen(cust_id)+3);/// 8 is for 5 word password
+                      lseek(fp,count,SEEK_SET); //positions at first char at beginnging of file.
+                      write(fp,"#",strlen("#"));
+                      flag=1;
+                      break;
+                    }
+                i=0;
+                l++;
+                continue;
+            }
+            i++;
+        }
+
+
+  close(fp);
+  if(flag==1)
+  {
+    strcat(cust_id,".txt");
+    if (remove(cust_id) == 0)
+      {
+        printf("Deleted successfully");
+        return 1;
+      }
+    else
+      printf("Unable to delete the file");
+
+
+  }
+  return 0;
+}
+
+int deleteAccountJ(char *cust_id,char *cust_id1,char *cust_id2,char *pass,char t)
 {
-  char accountid[MAX];
-  char username [MAX];
-  char name [MAX];
-  char password [MAX];
-  double balance;
-  char t;
+  int i=0;
+  int l = 1;
+  int count=0;
+  int flag=0;
+  char *token;
+  char line[1024];
+  int check=0;
 
-};
-struct jointcustomer
-{
-  char accountid[MAX];
-  char username [MAX];
-  char name [MAX];
-  char password [MAX];
-  double balance;
-  char t;
+  int fp = open("login_fileJ.txt",O_RDWR);
+   if(fp <0)
+       perror("Error");
+   while (read(fp,&line[i],1)==1){
+           count++;
+           if(line[i]=='\n' || line[i]==0x0 ){
+               line[i] = 0;
+               token = strtok(line," ");
+               if(strcmp(token,cust_id)==0)
+                 {
+                     check++;
+                     count= count-(strlen(pass)+strlen(cust_id)+strlen(cust_id1)+3);/// 8 is for 5 word password
+                     lseek(fp,count,SEEK_SET); //positions at first char at beginnging of file.
+                     write(fp,"#",strlen("#"));
+                     if(check==2)
+                     break;
+                   }
 
-};
+
+               i=0;
+               l++;
+               continue;
+           }
+           i++;
+       }
 
 
+  close(fp);
+  if(flag==1)
+  {
+    strcat(cust_id,".txt");
+    if (remove(cust_id) == 0)
+      {
+        printf("Deleted successfully");
+        return 1;
+      }
+    else
+      printf("Unable to delete the file");
 
-////////////////////////////////////////////////////////Admin Functions///////////////////////////////////////////////////////////////////////////////////////////
-int createNewUser(char *cust_id, char *buf)
+
+  }
+  return 0;
+}
+
+int createNewUser(char *cust_id, char *buf, char t)
 {
   strcat(cust_id,".txt");
   strcat(buf,"\n");
+  int fd, fd1;
 //  strcat(buf,"100\n");
-  int fd=open(cust_id,O_CREAT|O_EXCL|O_RDWR,0666);
-  int fd1=open("login_file.txt",O_RDWR|O_APPEND);
-
+   fd=open(cust_id,O_CREAT|O_EXCL|O_RDWR,0666);
+  if(t=='C')
+   fd1=open("login_file.txt",O_RDWR|O_APPEND);
+else
+   fd1=open("login_fileJ.txt",O_RDWR|O_APPEND);
   if(fd<0)
     {
       perror("User exist\n");
@@ -74,12 +151,16 @@ int createNewUser(char *cust_id, char *buf)
     return 1;
 }
 
-int checkValidUser(char *cust_id)
+int checkValidUser(char *cust_id, char t)
 {
   // checking for validity of user_id
   char line[1024];
-  int check = 0;
-  int fp = open("login_file.txt",O_RDONLY,0777);
+  int check = 0, fp;
+  printf("%s\n",cust_id );
+  if(t=='C')
+    fp = open("login_file.txt",O_RDONLY,0777);
+  else
+    fp = open("login_fileJ.txt",O_RDONLY,0777);
   if(fp <0)
       perror("Error in opening login_file.");
 
@@ -93,13 +174,12 @@ int checkValidUser(char *cust_id)
       if(line[i]=='\n' || line[i]==0x0 ){
           line[i] = 0;
           char *token = strtok(line," ");
-      //    printf("%s\n",token);
-      //    printf("1\n");
+
           if(strcmp(token,cust_id)==0){
               token=strtok(NULL," ");
               check=1;
-          //    printf("%s\n",token);
-          //    printf("2\n");
+            /*  close(fp);
+              return check;*/
 
             }
           i=0;
@@ -112,10 +192,9 @@ close(fp);
 return check;
 }
 
-int is_valid(char *amount)
+int is_valid(char *amount)// checking validity of amount
 {
-	// checking validity of amount
-	int i;
+		int i;
 	int count=0;
 	for(i=0;amount[i];i++)
 	{
@@ -136,7 +215,7 @@ int is_valid(char *amount)
 double available_balance(char *cust_id)
 {
   char filename[100];
-  strcat(cust_id,".txt");
+////  strcat(cust_id,".txt");
   int fp =open(cust_id,O_RDONLY);
   if(fp <0)
       {
@@ -170,61 +249,76 @@ double available_balance(char *cust_id)
 
 void mini_statement(int sock,char *cust_id)
 {
-  strcat(cust_id,".txt");
+////  strcat(cust_id,".txt");
   int fp =open(cust_id,O_RDONLY);
   char readbuf[MAX];
   int total=read(fp,readbuf,200);
   int pr=write(sock,readbuf,strlen(readbuf));
+  printf("%s",readbuf);
   close(fp);
 }
 
-int verify_credentials(int sockfd, char *user_type,int *cust_id)
+int verify_credentials(char *cust_id,char *pass)
 {
-    int n;
-    char buffer[MAX];
-    char *user, *pass;
+  char line[1024];
+  int check = 0, fp,fp1;
+  int i=0;
+  int l = 1;
+  printf("%s %s\n",cust_id,pass );
+  fp = open("login_file.txt",O_RDONLY,0777);
+  while (read(fp,&line[i],1)==1){
 
-    // reading username and password
-    bzero(buffer,MAX);
-    n = read(sockfd,buffer,MAX-1);
-    if (n < 0)
-        perror("ERROR reading from socket");
+      if(line[i]=='\n' || line[i]==0x0 ){
+          line[i] = 0;
+          char *token = strtok(line," ");
+          if(strcmp(token,cust_id)==0){
+              token=strtok(NULL," ");
+              if(strcmp(token,pass)==0)
+                {
+                  check=2;
+                  close(fp);
+                  return check;
+              }
+            }
+          i=0;
+          l++;
+          continue;
+         }
+      i++;
+     }
+close(fp);
+if(check==0)
+{
+  i=0;
+  l=1;
+  fp1 = open("login_fileJ.txt",O_RDONLY,0777);
+  while (read(fp1,&line[i],1)==1){
 
-    // breaking it
-    user = strtok(buffer, "$$$");
-    pass = strtok(NULL, "$$$");
+      if(line[i]=='\n' || line[i]==0x0 ){
+          line[i] = 0;
+          char *token = strtok(line," ");
+          if(strcmp(token,cust_id)==0){
+              token=strtok(NULL," ");
+              token=strtok(NULL," ");
+              if(!strcmp(token,pass))
+                {check=3;
+                 close(fp1);
+                 return check;
+              }
+            }
+          i=0;
+          l++;
+          continue;
+      }
+      i++;
+  }
+}
 
-    user[strlen(user)-1] = '\0';
-    pass[strlen(pass)-1] = '\0';
 
-    if(strlen(user)==0 || strlen(pass)==0)
-        return 0;
 
-    // checking for validity
-   FILE *fp = fopen("login_file.txt","r");
-    if(fp == NULL)
-        perror("Error in opening login_file.");
 
-    char *cred = NULL;
-    size_t len = 0;
-
-    while(getline(&cred,&len,fp)!=-1)
-    {
-        char *username = strtok(cred," ");
-        char *password = strtok(NULL," ");
-        char *usertype = strtok(NULL, " ");
-        if(!strcmp(username,user)&&!strcmp(password,pass))
-        {
-            *user_type = usertype[0];
-            *cust_id = atoi(username);
-            free(cred);
-            fclose(fp);
-            return 1;
-        }
-    }
-    fclose(fp);
-    free(cred);
-    return 0;
+close(fp1);
+return check;
 }
 
 int credit_amount(char *id, char *amount,char *trans)
@@ -263,7 +357,6 @@ write(fp,transaction,strlen(transaction));
 close(fp);
 return 1;
 }
-
 
 int debit_amount(char *id, char *amount, char *trans)
 {
@@ -323,8 +416,8 @@ int changePassword(char* cust_id,char *pass, char *newpass)
               token = strtok(line," ");
           //    printf("%s\n",token);
           //    printf("1\n");
-          printf("%d\n",count );
-              if(strcmp(token,cust_id)==0){
+    //      printf("%d\n",count );
+              if(strcmp(token,cust_id)==0)
                 {
                     count= count-(strlen(pass)+3);/// 8 is for 5 word password
                     lseek(fp,count,SEEK_SET); //positions at first char at beginnging of file.
@@ -332,7 +425,7 @@ int changePassword(char* cust_id,char *pass, char *newpass)
                     break;
                   }
 
-                }
+
               i=0;
               l++;
               continue;
@@ -344,10 +437,52 @@ int changePassword(char* cust_id,char *pass, char *newpass)
   return 1;
 }
 
+int changePasswordJ(char* cust_id,char *cust_id1,char *pass, char *newpass)
+{
+  int fp = open("login_fileJ.txt",O_RDWR);
+  if(fp <0)
+      perror("Error in opening user file for balance.");
+      char line[1024];
+      int check = 0;
+      int i=0;
+      int l = 1;
+      int count=0;
+      char *token;
+
+      while (read(fp,&line[i],1)==1){
+          count++;
+          if(line[i]=='\n' || line[i]==0x0 ){
+              line[i] = 0;
+              token = strtok(line," ");
+
+      //    printf("%d\n",count );
+              if(strcmp(token,cust_id)==0)
+                 {
+                  token =strtok(NULL," ");
+                  if(strcmp(token,cust_id1));
+                  {
+                    count= count-(strlen(pass)+strlen(cust_id1)+3);/// 8 is for 5 word password
+                    lseek(fp,count,SEEK_SET); //positions at first char at beginnging of file.
+                    write(fp,newpass,strlen(newpass));
+                    break;
+                  }
+                  }
+
+              i=0;
+              l++;
+              continue;
+          }
+          i++;
+        }
+
+  close(fp);
+  return 1;
+}
+
 void admin(int sockfd)
 {
     int n,m;
-    char buffer[MAX];
+    char buffer[MAX],cust_id1[MAX];
     char id[MAX], trans[MAX], amount[MAX], ip[MAX], pass[MAX],type[MAX];
 
     //////* Reading flag
@@ -365,20 +500,22 @@ void admin(int sockfd)
         if (m < 0)
           perror("ERROR reading from socket");
 
-        printf("%s  ip = \n",ip );
-
           switch (ip[0]) {
             case '1': {//////////Add Account
 
+                      bzero(type, MAX);
                       bzero(id, MAX);
                       bzero(pass, MAX);
-                      bzero(type, MAX);
 
+                      read(sockfd,type,sizeof(type));//read type
+                      printf("%c\n",type[0]);
+
+                      if(type[0]=='C')
+                      {
                       read(sockfd,id,sizeof(id));//read id
                       printf("%s\n",id );
                       read(sockfd,pass,sizeof(pass));//read pass
                       printf("%s\n",pass );
-                      read(sockfd,type,sizeof(type));//read type
 
                       bzero(buffer,MAX);
                       strcat(buffer,id);
@@ -386,8 +523,38 @@ void admin(int sockfd)
               	      strcat(buffer,pass);
                       strcat(buffer," ");
                       strcat(buffer,type);
+                     }
 
-                      if(checkValidUser(id)==0 && createNewUser(id,buffer)==1)// sending command
+                     if(type[0]=='J')
+                     {
+
+                     read(sockfd,id,sizeof(id));//read id
+                     printf("%s\n",id );
+                     read(sockfd,pass,sizeof(pass));//(read user1 pass1)
+                     printf("%s\n",pass );
+
+                     bzero(buffer,MAX);
+                     strcat(buffer,id);
+                     strcat(buffer," ");
+                     strcat(buffer,pass);
+                     strcat(buffer," ");
+                     strcat(buffer,type);
+                     strcat(buffer,"\n");
+
+                     bzero(pass,MAX);
+                     read(sockfd,pass,sizeof(pass));//(read user2 pass2)
+                     printf("%s\n",pass );
+                     strcat(buffer,id);
+                     strcat(buffer," ");
+                     strcat(buffer,pass);
+                     strcat(buffer," ");
+                     strcat(buffer,type);
+                     strcat(buffer,"\n");
+                    }
+                      bzero(cust_id1,MAX);
+                      strcpy(cust_id1,id);
+                      strcat(cust_id1,".txt");
+                      if(checkValidUser(cust_id1,type[0])==0 && createNewUser(id,buffer,type[0])==1)// sending command
                       {
                         n = write(sockfd,"successfully created new user\n",strlen("Successfully created new user\n"));
                         if (n < 0)
@@ -402,7 +569,6 @@ void admin(int sockfd)
 
                      break;
                    }
-
             case '2':{/////////////Transaction
 
 
@@ -415,9 +581,12 @@ void admin(int sockfd)
                      read(sockfd,trans,sizeof(trans));//read trans
                      printf("%s\n",trans );
                      read(sockfd,amount,sizeof(amount));//read amount
-
                      printf("%s\n",amount );
-                     int check=checkValidUser(id);
+                     read(sockfd,type,sizeof(type));//read amount
+                     printf("%s\n",type );
+                     strcat(id,".txt");
+
+                     int check=checkValidUser(id,type[0]);
 
                      if(check==0 || (strcmp(trans,"credit") && strcmp(trans,"debit")) || !is_valid(amount))
                          {
@@ -478,64 +647,123 @@ void admin(int sockfd)
                    }
             case '3':{///////////////////////Password update
 
-                        bzero(pass, MAX);
-                        read(sockfd,pass,sizeof(pass));//read pass
-                        bzero(trans,MAX);
-                        read(sockfd,trans,sizeof(trans));//read pass
+                      bzero(type, MAX);
+                      bzero(id, MAX);
+                      bzero(pass, MAX);
+                      bzero(cust_id1,MAX);
+                      bzero(trans,MAX);//treating transas old password
+                      int x;
+                      read(sockfd,type,sizeof(type));//read type
+                      printf("%c\n",type[0]);
 
-                        int x =changePassword(id,pass,trans);
+                      if(type[0]=='C')
+                      {
+                        read(sockfd,id,sizeof(id));//read id
+                        printf("%s\n",id );
+                        read(sockfd,trans,sizeof(trans));//read old pass
+                        printf("%s\n",trans );
+                        read(sockfd,pass,sizeof(pass));//read pass
+                        printf("%s\n",pass );
+
+
+                        x =changePassword(id,trans,pass);
+                      }
+
+                      if(type[0]=='J')
+                      {
+
+                      read(sockfd,id,sizeof(id));//read id
+                      printf("%s\n",id );
+                      read(sockfd,cust_id1,sizeof(cust_id1));//cust_id1
+                      printf("%s\n",cust_id1 );
+                      read(sockfd,trans,sizeof(trans));//read old pass
+                      printf("%s\n",trans );
+                      read(sockfd,pass,sizeof(pass));//read pass
+                      printf("%s\n",pass );
+
+                      x =changePasswordJ(id,cust_id1,trans,pass);
+
+                     }
+
                         bzero(buffer,MAX);
                         if(x==0)
-                        buffer="false";
+                        strcpy(buffer,"false");
                         else
-                        buffer="true";
+                        strcpy(buffer,"true");
                         n = write(sockfd,buffer,strlen(buffer));
                         if (n < 0)
                           perror("ERROR writing to socket");
 
-
                         break;
                    }
-
             case '4':{////////////////Delete Account
-                     bzero(id,MAX);
-                     printf("Enter username of the customer whose account has to be deleted\n");
-                     scanf("%[^\n]%*c",id);
+                      bzero(type, MAX);
+                      bzero(id, MAX);
+                      bzero(pass, MAX);
+                      bzero(cust_id1,MAX);
+                      bzero(trans,MAX);//treating trans as cust_id2 password
+                      int x;
+                      read(sockfd,type,sizeof(type));//read type
+                      printf("%c\n",type[0]);
 
+                      if(type[0]=='C')
+                      {
+                        read(sockfd,id,sizeof(id));//read id
+                        printf("%s\n",id );
+                        read(sockfd,pass,sizeof(pass));//read pass
+                        printf("%s\n",pass );
 
-                       bzero(buffer,MAX);
-                       strcat(buffer,id);
+                        bzero(cust_id1,MAX);
+                        strcpy(cust_id1,id);
+                        strcat(cust_id1,".txt");
 
+                        double bal = available_balance(cust_id1);
+                        strcat(cust_id1,".txt");
+                        if(bal<0)
+                        x=0;
+                        else
+                        {
+                          x=deleteAccount(id,pass,type[0]);
+                        }
+                      }
 
-                       // sending command
-                       n = write(sockfd,buffer,strlen(buffer));
-                       if (n < 0)
-                           perror("ERROR writing to socket");
+                      if(type[0]=='J')
+                      {
 
-                       // true or false
-                       bzero(buffer,MAX);
-                       n = read(sockfd,buffer,MAX-1);
-                       if (n < 0)
-                           perror("ERROR reading from socket");
+                        read(sockfd,id,sizeof(id));//read id
+                        printf("%s\n",id );
+                        read(sockfd,cust_id1,sizeof(cust_id1));//cust_id1
+                        printf("%s\n",cust_id1 );
+                        read(sockfd,trans,sizeof(trans));//read cust_id2
+                        printf("%s\n",trans );
+                        read(sockfd,pass,sizeof(pass));//read pass
+                        printf("%s\n",pass );
 
-                       if(!strcmp(buffer,"false"))
-                       {
-                           printf("Account could not be deleted the amount is not 0 \n");
-                       }
-                       else
-                       {
-                           printf("Deletion successful.\n\n");
-                       }
-                    /*   else
-                       {
-                         printf("Deletion Cancelled  \n");
-                       }
+                        bzero(amount,MAX);
+                        strcpy(amount,id);
+                        strcat(amount,".txt");///treaating amount as temp id
 
+                        double bal = available_balance(amount);
+                        bzero(amount,MAX);
+                        if(bal<0)
+                        x=0;
+                        else
+                        {
+                          x=deleteAccountJ(id,cust_id1,trans,pass,type[0]);
+                        }
 
-                  //   }
-*/
+                      }
 
-                     break;
+                      bzero(buffer,MAX);
+                      if(x==0)
+                      strcpy(buffer,"false");
+                      else
+                      strcpy(buffer,"true");
+                      n = write(sockfd,buffer,strlen(buffer));
+                      if (n < 0)
+                      perror("ERROR writing to socket");
+
+                      break;
                    }
             default:{
                      printf("You entered wrong Input ----try again\n");
@@ -553,26 +781,26 @@ void admin(int sockfd)
 }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////Customer Functions //////////////////////////////////////////////////////////////
-
-
 void customer(int sockfd,char *cust_id)
 {
   int n,m;
   char buffer[MAX];
   char id[MAX], trans[MAX], amount[MAX], ip[MAX], pass[MAX],type[MAX];
-  read(sockfd,id,sizeof(id));//read id of customer
+  bzero(id,MAX);
+  strcpy(id,cust_id);
+//  read(sockfd,id,sizeof(id));//read id of customer
 
   //////* Reading flag
   bzero(buffer,MAX);
-  n = read(sockfd,buffer,MAX-1);
+  n = read(sockfd,buffer,sizeof(buffer));
 //  printf("%s %c\n",buffer,buffer[0] );
   if (n < 0)
       perror("ERROR reading from socket");
 
+  strcat(cust_id,".txt");
   while(buffer[0]=='y')
   {
+
 
       printf("%s %c\n",buffer,buffer[0] );
       bzero(ip,MAX);
@@ -580,14 +808,14 @@ void customer(int sockfd,char *cust_id)
       if (m < 0)
         perror("ERROR reading from socket");
 
-     printf(" ip = %s hghghg\n",ip );
+     printf(" ip selected by user = %s .\n",ip );
 
         switch (ip[0]) {
           case '1':{//////////Check Balance
 
-                    if(checkValidUser(id)==1 )// sending command
+                    if(checkValidUser(id,'C')==1 )// sending command
                     {
-                      double amt = available_balance(id);
+                      double amt = available_balance(cust_id);
                       bzero(buffer,MAX);
                       sprintf(buffer,"%f",amt);
                       n = write(sockfd,buffer,strlen(buffer));
@@ -605,20 +833,17 @@ void customer(int sockfd,char *cust_id)
                  }
           case '2':{/////////////Transaction
 
-
                    bzero(amount, MAX);
-
                    bzero(trans, MAX);
 
-                /*   read(sockfd,id,sizeof(id));//read id
-                   printf("%s\n",id );*/
+
                    read(sockfd,trans,sizeof(trans));//read trans
                    printf("%s\n",trans );
                    read(sockfd,amount,sizeof(amount));//read amount
-
                    printf("%s\n",amount );
-                   int check=checkValidUser(id);
 
+                   int check=checkValidUser(id,'C');
+                   printf("cust ID - %s , check %d\n",cust_id,check );
                    if(check==0 || (strcmp(trans,"credit") && strcmp(trans,"debit")) || !is_valid(amount))
                        {
                            printf("Request from client with ip  declined. \n");
@@ -632,7 +857,7 @@ void customer(int sockfd,char *cust_id)
                        {
                         if(!strcmp(trans,"credit"))
                            {
-                            int x =credit_amount(id,amount,trans);
+                            int x =credit_amount(cust_id,amount,trans);
                             if(x==1)
                                {
                                  printf("Credit request from customer  successfully executed. \n");
@@ -653,7 +878,7 @@ void customer(int sockfd,char *cust_id)
                            }
                            else if(!strcmp(trans,"debit"))
                            {
-                            int f = debit_amount(id, amount, trans);
+                            int f = debit_amount(cust_id, amount, trans);
                                if(f==1)
                                {
                                  printf("Debit request for customer  successfully executed. \n");
@@ -686,9 +911,9 @@ void customer(int sockfd,char *cust_id)
                     int x =changePassword(id,pass,trans);
                   bzero(buffer,MAX);
                   if(x==0)
-                  buffer="false";
+                  strcpy(buffer,"false");
                   else
-                  buffer="true";
+                  strcpy(buffer,"true");
                    n = write(sockfd,buffer,strlen(buffer));
                    if (n < 0)
                        perror("ERROR writing to socket");
@@ -698,7 +923,7 @@ void customer(int sockfd,char *cust_id)
                  }
           case '4':{////////////////Mini Statement
 
-                   mini_statement(sockfd,id);
+                   mini_statement(sockfd,cust_id);
 
                    break;
                  }
@@ -720,40 +945,36 @@ void customer(int sockfd,char *cust_id)
 void jointCustomer(int sockfd,char *cust_id)
 {
   int n,m;
-  char buffer[MAX];
-  char id[MAX], trans[MAX], amount[MAX], ip[MAX], pass[MAX],type[MAX];
-
+  char buffer[MAX],cust_id1[MAX];
+  char id[MAX],trans[MAX], amount[MAX], ip[MAX], pass[MAX],type[MAX];
+  bzero(id,MAX);
+  strcpy(id,cust_id);
   //////* Reading flag
   bzero(buffer,MAX);
   n = read(sockfd,buffer,MAX-1);
   if (n < 0)
       perror("ERROR reading from socket");
 
+  strcat(cust_id,".txt");
+
   while(buffer[0]=='y')
   {
 
-      printf("%s\n",buffer );
+//      printf("%s\n",buffer );
       bzero(ip,MAX);
-      n = read(sockfd,ip,sizeof(ip));///read choice 1 - 4
+      n = read(sockfd,ip,strlen(ip));///read choice 1 - 4
       if (m < 0)
         perror("ERROR reading from socket");
 
-      printf("%s  ip = \n",ip );
+  //    printf("%s  ip = \n",ip );
 
         switch (ip[0]) {
           case '1':{//////////Check Balance
 
-                    bzero(id, MAX);
-                    bzero(pass, MAX);
-                    bzero(type, MAX);
 
-                    read(sockfd,id,sizeof(id));//read id
-                    printf("%s\n",id );
-
-
-                    if(checkValidUser(id)==1 )// sending command
+                    if(checkValidUser(id,'J')==1 )// sending command
                     {
-                      double amt = available_balance(id);
+                      double amt = available_balance(cust_id);
                       bzero(buffer,MAX);
                       sprintf(buffer,"%f",amt);
                       n = write(sockfd,buffer,strlen(buffer));
@@ -768,23 +989,19 @@ void jointCustomer(int sockfd,char *cust_id)
                    }
 
                    break;
-                 }
+                  }
           case '2':{/////////////Transaction
 
 
                    bzero(amount, MAX);
-                   bzero(id, MAX);
                    bzero(trans, MAX);
 
-                   read(sockfd,id,sizeof(id));//read id
-                   printf("%s\n",id );
                    read(sockfd,trans,sizeof(trans));//read trans
                    printf("%s\n",trans );
                    read(sockfd,amount,sizeof(amount));//read amount
 
                    printf("%s\n",amount );
-                   int check=checkValidUser(id);
-
+                   int check=checkValidUser(id,'J');
                    if(check==0 || (strcmp(trans,"credit") && strcmp(trans,"debit")) || !is_valid(amount))
                        {
                            printf("Request from client with ip  declined. \n");
@@ -798,7 +1015,7 @@ void jointCustomer(int sockfd,char *cust_id)
                        {
                         if(!strcmp(trans,"credit"))
                            {
-                            int x =credit_amount(id,amount,trans);
+                            int x =credit_amount(cust_id,amount,trans);
                             if(x==1)
                                {
                                  printf("Credit request from customer  successfully executed. \n");
@@ -819,7 +1036,7 @@ void jointCustomer(int sockfd,char *cust_id)
                            }
                            else if(!strcmp(trans,"debit"))
                            {
-                            int f = debit_amount(id, amount, trans);
+                            int f = debit_amount(cust_id, amount, trans);
                                if(f==1)
                                {
                                  printf("Debit request for customer  successfully executed. \n");
@@ -844,29 +1061,34 @@ void jointCustomer(int sockfd,char *cust_id)
                  }
           case '3':{///////////////////////Password update
 
-                    bzero(pass, MAX);
-                    read(sockfd,pass,sizeof(pass));//read pass
+                    int x;
+                    bzero(cust_id1,MAX);
                     bzero(trans,MAX);
-                    read(sockfd,trans,sizeof(trans));//read pass
+                    bzero(pass,MAX);
 
-                    int x =changePassword(id,pass,trans);
+                    read(sockfd,cust_id1,sizeof(cust_id1));//cust_id1
+                    printf("%s\n",cust_id1 );
+                    read(sockfd,trans,sizeof(trans));//read old pass
+                    printf("%s\n",trans );
+                    read(sockfd,pass,sizeof(pass));//read pass
+                    printf("%s\n",pass );
+
+                    x =changePasswordJ(id,cust_id1,trans,pass);
+
                     bzero(buffer,MAX);
                     if(x==0)
-                    buffer="false";
+                    strcpy(buffer,"false");
                     else
-                    buffer="true";
+                    strcpy(buffer,"true");
                     n = write(sockfd,buffer,strlen(buffer));
                     if (n < 0)
-                    perror("ERROR writing to socket");
-
+                      perror("ERROR writing to socket");
 
                     break;
                  }
           case '4':{////////////////Mini Statement
-                   bzero(id,MAX);
-                   read(sockfd,id,sizeof(id));//read id
-                   printf("%s\n",id );
-                   mini_statement(sockfd,id);
+
+                   mini_statement(sockfd,cust_id);
 
                    break;
                  }
@@ -884,7 +1106,6 @@ void jointCustomer(int sockfd,char *cust_id)
 
 }
 }
-////////////////////////////////////////////////////////////////Cust function ends/////////////////////////////////////////////////////////////////////////////
 
 int main()
 {
@@ -899,7 +1120,7 @@ int main()
     int opt = 1;
     int addrlen = sizeof(server);
     char buffer[1024] = {0};
-    char *welcomemessage = "Welcome to the Banking System\n";
+    char *welcomemessage = "\nWelcome to the Banking System\n\n";
 
     // attaching socket to the port
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,  &opt, sizeof(opt))<0)
@@ -937,32 +1158,44 @@ int main()
      printf("\n" );
      write(new_socket , welcomemessage , strlen(welcomemessage) );////welcome to banking system
      bzero(buff, MAX);
-     strcpy(buff,"Enter username");
+     strcpy(buff,"Enter your account name\n");
      write(new_socket,buff,sizeof(buff));///enter username
      bzero(buff, MAX);
      read(new_socket, buff, sizeof(buff));// read username
      strcpy(usr,buff);
 
      bzero(buff, MAX);
-     strcpy(buff,"Enter password");
+     strcpy(buff,"Enter password\n");
      write(new_socket,buff,sizeof(buff));//enter password
      bzero(buff, MAX);
      read(new_socket, buff, sizeof(buff));// read password
      strcpy(pass,buff);
 
 
-     if(strcmp(usr,"admin")==0)// if admin
+     if(strcmp(usr,"admin")==0  && strcmp(pass,"1212")==0)// if admin
      {
+       write(new_socket,"1",sizeof("1"));
        admin(new_socket);
-     }
-     else if(strcmp(usr,"yash")==0)
-     {
-       customer(new_socket,usr);
-
      }
      else
      {
-       jointCustomer(new_socket,usr);
+       int v= verify_credentials(usr,pass);
+       printf("%d \n",v);
+       if(v==2)
+       {
+         write(new_socket,"2",sizeof("2"));
+         customer(new_socket,usr);
+       }
+       else if(v==3)
+       {
+         write(new_socket,"3",sizeof("3"));
+         jointCustomer(new_socket,usr);
+       }
+       else
+       {
+         write(new_socket,"Unauthorized User",sizeof("Unauthorized User"));
+       }
+
      }
 
     return 0;
