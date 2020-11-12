@@ -180,7 +180,7 @@ int checkValidUser(char *cust_id, char t)
               check=1;
             /*  close(fp);
               return check;*/
-
+              break;
             }
           i=0;
           l++;
@@ -189,6 +189,7 @@ int checkValidUser(char *cust_id, char t)
       i++;
   }
 close(fp);
+printf("%d",check);
 return check;
 }
 
@@ -262,7 +263,7 @@ void mini_statement(int sock,char *cust_id)
 ////  strcat(cust_id,".txt");
   int fp =open(cust_id,O_RDONLY);
   char readbuf[MAX];
-  int total=read(fp,readbuf,200);
+  int total=read(fp,readbuf,1024);
   int pr=write(sock,readbuf,strlen(readbuf));
   printf("%s",readbuf);
   close(fp);
@@ -494,7 +495,8 @@ int changePasswordJ(char* cust_id,char *cust_id1,char *pass, char *newpass)
                   token =strtok(NULL," ");
                   if(strcmp(token,cust_id1));
                   {
-                    count= count-(strlen(pass)+strlen(cust_id1)+3);/// 8 is for 5 word password
+              //      count= count-(strlen(pass)+strlen(cust_id1)+4);/// 8 is for 5 word password
+                      count= count-(strlen(pass)+3);
                     lseek(fp,count,SEEK_SET); //positions at first char at beginnging of file.
                     write(fp,newpass,strlen(newpass));
                     break;
@@ -617,9 +619,11 @@ void admin(int sockfd)
                      printf("%s\n",amount );
                      read(sockfd,type,sizeof(type));//read amount
                      printf("%s\n",type );
+                     bzero(cust_id1,MAX);
+                     strcat(cust_id1,id);
                      strcat(id,".txt");
 
-                     int check=checkValidUser(id,type[0]);
+                     int check=checkValidUser(cust_id1,type[0]);
 
                      if(check==0 || (strcmp(trans,"credit") && strcmp(trans,"debit")) || !is_valid(amount))
                          {
@@ -638,9 +642,16 @@ void admin(int sockfd)
                               if(x==1)
                                  {
                                    printf("Credit request from customer  successfully executed. \n");
-                             	     bzero(buffer,MAX);
-                                   strcpy(buffer,"true");// sending true
+                             	  //   bzero(buffer,MAX);
+                            //       strcpy(buffer,"true");// sending true
+                              //     n = write(sockfd,buffer,strlen(buffer));
+/////yash update
+                                   bzero(buffer,MAX);
+                                   double bal =available_balance(id);
+                                   sprintf(buffer,"%.2f",bal);
+                                   printf("%s\n",buffer );
                                    n = write(sockfd,buffer,strlen(buffer));
+///
                                    if (n < 0)
                                      perror("ERROR writing to socket");
                                    }
@@ -659,9 +670,16 @@ void admin(int sockfd)
                                  if(f==1)
                                  {
                                  	 printf("Debit request for customer  successfully executed. \n");
-                                   bzero(buffer,MAX);
+                                  /* bzero(buffer,MAX);
                  	                strcpy(buffer,"true");
-                 	                n = write(sockfd,buffer,strlen(buffer));// sending true
+                 	                n = write(sockfd,buffer,strlen(buffer));*/// sending true
+
+                                  bzero(buffer,MAX);
+                                  double bal =available_balance(id);
+                                  sprintf(buffer,"%.2f",bal);
+                                  printf("%s\n",buffer );
+                                  n = write(sockfd,buffer,strlen(buffer));
+
                  	                if (n < 0)
                  	                    perror("ERROR writing to socket");
                                  }
@@ -756,7 +774,7 @@ void admin(int sockfd)
                         printf("%s %s\n",cust_id1,id );
                         double bal = available_balance(cust_id1);
 
-                        if(bal<0)
+                        if(bal>0)
                         x=0;
                        else
                         {
@@ -778,11 +796,11 @@ void admin(int sockfd)
 
                         bzero(amount,MAX);
                         strcpy(amount,id);
-                        strcat(amount,".txt");///treaating amount as temp id
+                        strcat(amount,".txt");///treaating amount as temp id to check the balance
 
                         double bal = available_balance(amount);
                         bzero(amount,MAX);
-                        if(bal<0)
+                        if(bal>0)
                         x=0;
                         else
                         {
@@ -899,9 +917,16 @@ void customer(int sockfd,char *cust_id)
                             if(x==1)
                                {
                                  printf("Credit request from customer  successfully executed. \n");
-                                 bzero(buffer,MAX);
+                              /*   bzero(buffer,MAX);
                                  strcpy(buffer,"true");// sending true
+                                 n = write(sockfd,buffer,strlen(buffer));*/
+
+                                 bzero(buffer,MAX);
+                                 double bal =available_balance(cust_id);
+                                 sprintf(buffer,"%.2f",bal);
+                                 printf("%s\n",buffer );
                                  n = write(sockfd,buffer,strlen(buffer));
+
                                  if (n < 0)
                                    perror("ERROR writing to socket");
                                  }
@@ -920,9 +945,16 @@ void customer(int sockfd,char *cust_id)
                                if(f==1)
                                {
                                  printf("Debit request for customer  successfully executed. \n");
-                                 bzero(buffer,MAX);
+                          /*       bzero(buffer,MAX);
                                 strcpy(buffer,"true");
-                                n = write(sockfd,buffer,strlen(buffer));// sending true
+                                n = write(sockfd,buffer,strlen(buffer));// sending true*/
+
+                                bzero(buffer,MAX);
+                                double bal =available_balance(cust_id);
+                                sprintf(buffer,"%.2f",bal);
+                                printf("%s\n",buffer );
+                                n = write(sockfd,buffer,strlen(buffer));
+
                                 if (n < 0)
                                     perror("ERROR writing to socket");
                                }
@@ -998,13 +1030,13 @@ void jointCustomer(int sockfd,char *cust_id)
   while(buffer[0]=='y')
   {
 
-//      printf("%s\n",buffer );
+    printf("%s.....\n",buffer );
       bzero(ip,MAX);
-      n = read(sockfd,ip,strlen(ip));///read choice 1 - 4
+      n = read(sockfd,ip,sizeof(ip));///read choice 1 - 4
       if (m < 0)
         perror("ERROR reading from socket");
 
-  //    printf("%s  ip = \n",ip );
+      printf("ip =%s \n",ip );
 
         switch (ip[0]) {
           case '1':{//////////Check Balance
@@ -1012,6 +1044,7 @@ void jointCustomer(int sockfd,char *cust_id)
 
                     if(checkValidUser(id,'J')==1 )// sending command
                     {
+                      printf("valid user\n" );
                       double amt = available_balance(cust_id);
                       bzero(buffer,MAX);
                       sprintf(buffer,"%f",amt);
@@ -1057,9 +1090,17 @@ void jointCustomer(int sockfd,char *cust_id)
                             if(x==1)
                                {
                                  printf("Credit request from customer  successfully executed. \n");
-                                 bzero(buffer,MAX);
+                      /*           bzero(buffer,MAX);
                                  strcpy(buffer,"true");// sending true
+                                 n = write(sockfd,buffer,strlen(buffer));*/
+
+                                 bzero(buffer,MAX);
+                                 double bal =available_balance(cust_id);
+                                 printf("%s\n",id );
+                                 sprintf(buffer,"%.2f",bal);
+                                 printf("%s\n",buffer );
                                  n = write(sockfd,buffer,strlen(buffer));
+
                                  if (n < 0)
                                    perror("ERROR writing to socket");
                                  }
@@ -1078,9 +1119,16 @@ void jointCustomer(int sockfd,char *cust_id)
                                if(f==1)
                                {
                                  printf("Debit request for customer  successfully executed. \n");
-                                 bzero(buffer,MAX);
+                              /*   bzero(buffer,MAX);
                                 strcpy(buffer,"true");
-                                n = write(sockfd,buffer,strlen(buffer));// sending true
+                                n = write(sockfd,buffer,strlen(buffer));// sending true*/
+
+                                bzero(buffer,MAX);
+                                double bal =available_balance(cust_id);
+                                sprintf(buffer,"%.2f",bal);
+                                printf("%s\n",buffer );
+                                n = write(sockfd,buffer,strlen(buffer));
+
                                 if (n < 0)
                                     perror("ERROR writing to socket");
                                }
@@ -1111,8 +1159,9 @@ void jointCustomer(int sockfd,char *cust_id)
                     read(sockfd,pass,sizeof(pass));//read pass
                     printf("%s\n",pass );
 
+                    printf("uuiuiui\n");
                     x =changePasswordJ(id,cust_id1,trans,pass);
-
+                    printf("yuyyuyuyu\n");
                     bzero(buffer,MAX);
                     if(x==0)
                     strcpy(buffer,"false");
@@ -1147,6 +1196,7 @@ void jointCustomer(int sockfd,char *cust_id)
 
 int main()
 {
+
     int server_fd;
     struct sockaddr_in server;
     // Creating socket file descriptor
@@ -1182,6 +1232,8 @@ int main()
         perror("Wait for your turn / connect again after some time");
         exit(EXIT_FAILURE);
     }
+    while(1)
+    {
     int new_socket;
     if ((new_socket = accept(server_fd, (struct sockaddr *)&server, (socklen_t*)&addrlen))<0)
     {
@@ -1189,11 +1241,12 @@ int main()
         exit(EXIT_FAILURE);
     }
   //  bzero(welcomemessage, MAX);
+  if(!fork())
+  {
     char buff[MAX],usr[MAX],pass[MAX];
     int n;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //  for (;;) {
-     printf("\n" );
+    printf("\n" );
      write(new_socket , welcomemessage , strlen(welcomemessage) );////welcome to banking system
      bzero(buff, MAX);
      strcpy(buff,"Enter your account name\n");
@@ -1235,6 +1288,8 @@ int main()
        }
 
      }
-
+   }
+}
     return 0;
+
 }
