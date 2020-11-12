@@ -17,7 +17,7 @@ void admin(int sockfd)
     char flag,ip;
     char confirm;
 
-    printf("Do you want to continue using other services (y/n): \n");
+    printf("Do you want to continue using Banking services (y/n): \n");
     scanf("%c",&flag);
     getchar();
 
@@ -31,7 +31,7 @@ void admin(int sockfd)
             perror("ERROR writing to socket");
 
         bzero(ipbuf,MAX);
-        printf("Specify action :\n1. Add new customer account\n2. Make a transaction to current user account(C-Credit/D-Debit)\n3. Update current user's password\n4. Delete user account\n");
+        printf("\nSpecify action :\n1. Add new customer account\n2. Make a transaction to current user account(C-Credit/D-Debit)\n3. Update current user's password\n4. Delete user account\n");
         scanf("%[^\n]%*c",&ip);
 
         ipbuf[0] = ip;
@@ -43,7 +43,7 @@ void admin(int sockfd)
         switch (ip) {
           case '1': {//////////Add Account
 
-  								 printf("Manadatory Rs 100 as start balance for creating new account. \n");
+  								 printf("\nManadatory Rs 100 as start balance for creating new account. \n");
 									 bzero(type,MAX);
 									 printf("Enter type - C for normal customer, J for joint customer\n");
 									 scanf("%[^\n]%*c",type);
@@ -51,40 +51,40 @@ void admin(int sockfd)
 						       if(type[0]=='C')
 									 {
 									 bzero(id,MAX);
-                   printf("Enter username of the customer\n");
+                   printf("\nEnter username of the customer\n");
                    scanf("%[^\n]%*c",id);
 									 write(sockfd,id,strlen(id)); // send id
 
                    bzero(pass,MAX);
-                   printf("Set Password of the new customer\n");
+                   printf("\nSet Password of the new customer\n");
                    scanf("%[^\n]%*c",pass);
                    write(sockfd,pass,sizeof(pass));// send pass
 							  	 }
 									 else if(type[0]=='J')
 									 {
 										 bzero(id,MAX);
-	                   printf("Enter account name of the joint customer\n");
+	                   printf("\nEnter account name of the joint customer\n");
 	                   scanf("%[^\n]%*c",id);
 										 write(sockfd,id,strlen(id)); // send id
 
 										 bzero(id,MAX);
-	                   printf("Enter username of customer1\n");
+	                   printf("\nEnter username of primary customer\n");
 	                   scanf("%[^\n]%*c",id);
 
 										 bzero(pass,MAX);
-	                   printf("Set Password of the new customer\n");
+	                   printf("\nSet Password of the primary customer\n");
 	                   scanf("%[^\n]%*c",pass);
 										 strcat(id," ");
 										 strcat(id,pass);
 	                   write(sockfd,id,sizeof(id));// send u(user1 pass1)
 
 										 bzero(id,MAX);
-	                   printf("Enter username of customer1\n");
+	                   printf("\nEnter username of secondary customer\n");
 	                   scanf("%[^\n]%*c",id);
 
 
 	                   bzero(pass,MAX);
-	                   printf("Set Password of the new customer\n");
+	                   printf("\nSet Password of the secondary customer\n");
 	                   scanf("%[^\n]%*c",pass);
 										 strcat(id," ");
 										 strcat(id,pass);
@@ -133,32 +133,37 @@ void admin(int sockfd)
                    {
                        printf("Transaction denied.\n\n");
                    }
-                   else (!strcmp(buffer,"true"));
+                   else //if (!strcmp(buffer,"true"))
                    {
-                       printf("Transaction successful.\n\n");
+                    //   printf("Transaction successful.\n\n");
+
+		                 /*  n = read(sockfd,buffer,sizeof(buffer));// read balance*/
+											 printf("\n Transaction successful. \nThe updated balance is - %s \n",buffer);
+											 bzero(buffer,MAX);
+
                    }
 
                    break;
                  }
           case '3':{///////////////////////Password update
 
-										printf("Enter type - C for normal customer, J for joint customer\n");
+										printf("\nEnter type - C for normal customer, J for joint customer\n");
 										scanf("%[^\n]%*c",type);
 										write(sockfd,type,sizeof(type));// send type
 										if(type[0]=='C')
 										{
 											bzero(id,MAX);
-											printf("Enter username of the customer\n");
+											printf("\nEnter username of the customer\n");
 											scanf("%[^\n]%*c",id);
 											write(sockfd,id,strlen(id)); // send id
 
 											bzero(trans,MAX);
-											printf("Enter old password\n");
+											printf("\nEnter old password\n");
 											scanf("%[^\n]%*c",trans);
 											write(sockfd,trans,strlen(trans)); // send old password
 
 											bzero(pass,MAX);
-											printf("Set Password of the new customer\n");
+											printf("\nSet new Password of the customer\n");
 											scanf("%[^\n]%*c",pass);
 											write(sockfd,pass,sizeof(pass));// send new pass
 										}
@@ -166,21 +171,22 @@ void admin(int sockfd)
 										else if(type[0]=='J')
  									 {
  										 bzero(id,MAX);
- 	                   printf("Enter account name of the joint customer\n");
+ 	                   printf("Enter account name(not username) of the joint customer\n");
  	                   scanf("%[^\n]%*c",id);
- 										 write(sockfd,id,strlen(id)); // send id
+ 										 write(sockfd,id,strlen(id)); // send ACC id
 
  										 bzero(id,MAX);
- 	                   printf("Enter username of customer whose password has to be changed\n");
+ 	                   printf("\nEnter username of customer whose password has to be changed\n");
  	                   scanf("%[^\n]%*c",id);
+										 write(sockfd,id,strlen(id)); // send cust_id
 
 										 bzero(trans,MAX);
-										 printf("Enter old password\n");
+										 printf("\nEnter old password\n");
 										 scanf("%[^\n]%*c",trans);
 										 write(sockfd,trans,strlen(trans)); // send old password
 
 										 bzero(pass,MAX);
-										 printf("Set Password of the new customer\n");
+										 printf("\nSet new Password of the customer\n");
 										 scanf("%[^\n]%*c",pass);
 										 write(sockfd,pass,sizeof(pass));// send new pass
 									 }
@@ -192,18 +198,18 @@ void admin(int sockfd)
 
                    if(!strcmp(buffer,"false"))
                    {
-                       printf("Password could not be updated\n\n");
+                       printf("\nPassword could not be updated\n\n");
                    }
                    else
                    {
-                       printf("Password update successful.\n\n");
+                       printf("\nPassword update successful.\n\n");
                    }
 
                    break;
                  }
           case '4':{////////////////Delete Account
 
-								   printf("Enter Y to confirm delete\n");
+								   printf("\nEnter Y to confirm delete\n");
                    char confirm[MAX];
 
                    scanf("%[^\n]%*c",confirm);
@@ -212,18 +218,18 @@ void admin(int sockfd)
                    if(confirm[0]=='Y')
                    {
 										 bzero(type,MAX);
-										 printf("Enter type - C for normal customer, J for joint customer\n");
+										 printf("\nEnter type - C for normal customer, J for joint customer\n");
  										scanf("%[^\n]%*c",type);
  										write(sockfd,type,sizeof(type));// send type
  										if(type[0]=='C')
  										{
  											bzero(id,MAX);
-											printf("Enter username of the customer whose account has to be deleted\n");
+											printf("\nEnter username of the customer whose account has to be deleted\n");
 											scanf("%[^\n]%*c",id);
  											write(sockfd,id,strlen(id)); // send id
 
  											bzero(pass,MAX);
- 											printf("Ask Password of the customer for confirmation\n");
+ 											printf("\nAsk Password of the customer for confirmation\n");
  											scanf("%[^\n]%*c",pass);
  											write(sockfd,pass,sizeof(pass));// send new pass
  										}
@@ -231,13 +237,14 @@ void admin(int sockfd)
  										else if(type[0]=='J')
   									 {
   										 bzero(id,MAX);
-  	                   printf("Enter account name of the joint customer\n");
+  	                   printf("\nEnter account name of the joint customer\n");
   	                   scanf("%[^\n]%*c",id);
   										 write(sockfd,id,strlen(id)); // send id
 
   										 bzero(id,MAX);
   	                   printf("Enter username of primary customer\n");
   	                   scanf("%[^\n]%*c",id);// Ist user
+											 write(sockfd,id,strlen(id)); // send id
 
  										 	bzero(trans,MAX);
  										 	printf("Enter username of secondary customer\n");
@@ -245,7 +252,7 @@ void admin(int sockfd)
  										 	write(sockfd,trans,strlen(trans)); // secondary user
 
  										 	bzero(pass,MAX);
- 										 	printf("Enter Password of primary customer\n");
+ 										 	printf("Enter Password of primary customer to confirm\n");
  										 	scanf("%[^\n]%*c",pass);
  										 	write(sockfd,pass,sizeof(pass));// set new pass
  									 }
@@ -278,7 +285,7 @@ void admin(int sockfd)
         }
 
 
-        printf("Do you want to continue using other services (y/n): \n");
+        printf("Do you want to continue using Banking services (y/n): \n");
         scanf("%c",&flag);
         getchar();
     }
@@ -299,7 +306,7 @@ void customer(int sockfd , char *cust_id)
     char confirm;
 
 
-    printf("Do you want to continue using other services (y/n): \n");
+    printf("Do you want to continue using Banking services (y/n): \n");
     scanf("%c",&flag);
     getchar();
 
@@ -357,9 +364,11 @@ void customer(int sockfd , char *cust_id)
                    {
                        printf("Transaction denied.\n\n");
                    }
-                   else (!strcmp(buffer,"true"));
+                   else
                    {
-                       printf("Transaction successful.\n\n");
+                    //   printf("Transaction successful.\n\n");
+											 printf("\n Transaction successful. \nThe updated balance is - %s \n",buffer);
+											 bzero(buffer,MAX);
                    }
 
                    break;
@@ -409,7 +418,7 @@ void customer(int sockfd , char *cust_id)
         }
 
 
-        printf("Do you want to continue using other services (y/n): \n");
+        printf("Do you want to continue using Banking services (y/n): \n");
         scanf("%c",&flag);
         getchar();
 
@@ -429,7 +438,7 @@ void jointCustomer(int sockfd , char *id)
     char flag,ip;
     char confirm;
 
-    printf("Do you want to continue using other services (y/n): \n");
+    printf("Do you want to continue using Banking services (y/n): \n");
     scanf("%c",&flag);
     getchar();
 
@@ -444,15 +453,16 @@ void jointCustomer(int sockfd , char *id)
 
         bzero(ipbuf,MAX);
         printf("Specify action :\n1. Check Balance\n2. Make a transaction in user account(C-Credit/D-Debit)\n3. Update current user's password\n4. Print Mini Statement\n");
-        scanf("%[^\n]%*c",&ip);
+        scanf("%[^\n]%*c",ipbuf);
 
-        ipbuf[0] = ip;
-        ipbuf[1] = '\0';
-        int m = write(sockfd,ipbuf,strlen(ipbuf));///action to be performed -1-4
+      /*  ipbuf[0] = ip;
+        ipbuf[1] = '\0';*/
+				printf("%s\n",ipbuf );
+        int m = write(sockfd,ipbuf,sizeof(ipbuf));///action to be performed -1-4
         if (m < 0)
             perror("ERROR writing to socket");
 
-        switch (ip) {
+        switch (ipbuf[0]) {
           case '1':{//////////Check Balance
 
                    // true or false
@@ -487,9 +497,11 @@ void jointCustomer(int sockfd , char *id)
                    {
                        printf("Transaction denied.\n\n");
                    }
-                   else (!strcmp(buffer,"true"));
+                   else
                    {
-                       printf("Transaction successful.\n\n");
+            //           printf("Transaction successful.\n\n");
+											 printf("\n Transaction successful. \nThe updated balance is - %s \n",buffer);
+											 bzero(buffer,MAX);
                    }
 
                    break;
@@ -500,6 +512,7 @@ void jointCustomer(int sockfd , char *id)
 										bzero(id,MAX);
 										printf("Enter username of customer whose password has to be changed\n");
 										scanf("%[^\n]%*c",id);
+										write(sockfd,trans,strlen(trans)); // userbame write
 
 										bzero(trans,MAX);
 										printf("Enter old password\n");
@@ -531,7 +544,7 @@ void jointCustomer(int sockfd , char *id)
           case '4':{////////////////Mini Statement
                       // true or false
                      bzero(buffer,MAX);
-                     n = read(sockfd,buffer,MAX-1);
+                     n = read(sockfd,buffer,sizeof(buffer));
 							//			 printf("%s \n",buffer );
                      if (n < 0)
                          perror("ERROR reading from socket");
@@ -546,15 +559,16 @@ void jointCustomer(int sockfd , char *id)
         }
 
 
-        printf("Do you want to continue using other services (y/n): \n");
+        printf("Do you want to continue using Banking services (y/n): \n");
         scanf("%c",&flag);
         getchar();
-    }
+
     // sending flag
     bzero(buffer,MAX);
     buffer[0] = flag;
     buffer[1] = '\0';
 //    n = write(sockfd,buffer,strlen(buffer));
+}
 }
 
 int main()
